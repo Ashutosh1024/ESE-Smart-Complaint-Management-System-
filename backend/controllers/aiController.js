@@ -36,6 +36,7 @@ exports.analyzeComplaint = async (req, res) => {
             },
             body: JSON.stringify({
                 model: "google/gemini-2.5-flash",
+                max_tokens: 500,
                 messages: [
                     { role: "user", content: prompt }
                 ]
