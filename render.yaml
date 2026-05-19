@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: complaint-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PORT
+        value: "5000"
+
+  - type: web
+    name: complaint-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: complaint-backend
+          property: host
+          # Assuming we want to point to the backend's /api path
+          # Render will replace this dynamically. However, Render static sites need env vars at build time.
+          # Render handles this, but usually, it's easier to manually set the API URL on the frontend dashboard.
