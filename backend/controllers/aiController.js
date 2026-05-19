@@ -1,7 +1,4 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-
-// Access your API key as an environment variable
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// We will use native fetch to call OpenRouter since the provided key is an OpenRouter key (sk-or-v1...)
 
 // @route   POST /api/ai/analyze
 // @desc    AI Complaint Analyzer
@@ -14,9 +11,6 @@ exports.analyzeComplaint = async (req, res) => {
     }
 
     try {
-        // The Gemini 1.5 models are versatile and work with most use cases
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
-
         const prompt = `
         You are an AI assistant for a Smart Complaint Management System. 
         Analyze the following complaint and provide the output in JSON format with exactly the following keys:
@@ -34,9 +28,27 @@ exports.analyzeComplaint = async (req, res) => {
         Return ONLY a raw JSON object. Do not use Markdown formatting or code blocks.
         `;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        let text = response.text();
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${process.env.GEMINI_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "google/gemini-1.5-flash",
+                messages: [
+                    { role: "user", content: prompt }
+                ]
+            })
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(`OpenRouter API error: ${JSON.stringify(data)}`);
+        }
+
+        let text = data.choices[0].message.content;
         
         // Clean up text in case the model returns markdown code blocks
         text = text.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
